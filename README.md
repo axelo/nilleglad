@@ -2,6 +2,12 @@
 
 Hämtar upp rapporterad tid i Maya för RAÄ och ger tillbaka en mailtemplate-text med Visby- och Distanstimmar separerat. Kopiera och skicka som mail till berörd person.
 
+# Installation
+
+Klona repot sen
+
+    npm install
+
 # Användning
 
     ./bin/nilleglad Veckonummer Maya-användarnamn [Maya-lösenord]
