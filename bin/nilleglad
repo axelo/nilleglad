@@ -1,0 +1,12 @@
+#!/bin/bash
+
+DIR=`dirname $0`
+MAYA_PASSWORD=$3
+NB_OF_ARGS=$#
+
+if [ -z "$MAYA_PASSWORD" ] && [ "$NB_OF_ARGS" -gt 1 ]; then
+    read -s -p "Maya-lösnenord: " MAYA_PASSWORD
+    echo
+fi
+
+node $DIR/../lib/nilleglad.js $1 $2 $MAYA_PASSWORD 
