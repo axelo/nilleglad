@@ -1,8 +1,7 @@
 const express = require('express');
 const app = express();
-const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-
+const fs = require('fs');
 const maya = require('./maya.js');
 
 app.use(bodyParser.urlencoded({
@@ -35,18 +34,24 @@ app.post('/login',  (req, res) => {
 
 app.get('/', function(req, res) {
 
-    console.log('Cookies', req.headers.cookie);
-
     if (!req.headers.cookie) {
         res.redirect('login');
         return;
     }
 
-    console.log('Logged with the cookie', req.headers.cookie);
-
     maya.timeReportingYearWeek(2016, 16, req.headers.cookie, (times, err) => {
         if (err) return res.redirect('login');
-        res.send(times);
+
+        res.setHeader('Content-Type', 'text/html');
+
+        const reportHtmlTemplate = fs.readFileSync('views/report.html', 'UTF-8').toString();
+
+        const reportHtml = reportHtmlTemplate
+            .replace(new RegExp('\\$\\{weekNo\\}', 'g'), '16')
+            .replace(new RegExp('\\$\\{visby\\}', 'g'), times.visby)
+            .replace(new RegExp('\\$\\{notVisby\\}', 'g'), times.distans);
+
+        res.send(reportHtml);
     });
 
 });
