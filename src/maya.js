@@ -10,26 +10,24 @@ const mayaProjectNames = [
     'Raä - Frontend'
 ];
 
-function timesForWeek(year, weekNo, mayaUsername, mayaPassword, cb) {
+/*function timesForWeek(year, weekNo, mayaUsername, mayaPassword, cookie, cb) {
     if (!Number.isInteger(year) || year < 0) throw 'År måste vara ett positivt heltal';
     if (!Number.isInteger(weekNo) || weekNo < 1 || weekNo > 52) throw 'Veckonummer måste vara ett heltal mellan 1 och 52';
 
-    getCookie((cookie, err) => {
-        if (err) return cb(undefined, 'Misslyckades med att hämta sessionskaka');
+    if (err) return cb(undefined, 'Misslyckades med att hämta sessionskaka');
 
-        login(mayaUsername, mayaPassword, cookie, (body, err) => {
-            if (err) return cb(undefined, 'Misslyckades med att logga in');
+    login(mayaUsername, mayaPassword, cookie, (body, err) => {
+        if (err) return cb(undefined, 'Misslyckades med att logga in');
 
-            timeReportingYearWeek(year, weekNo, cookie, (times, err) => {
-                if (err) return cb(undefined, 'Misslyckades med att hämta inrapporterad tid');
+        timeReportingYearWeek(year, weekNo, cookie, (times, err) => {
+            if (err) return cb(undefined, 'Misslyckades med att hämta inrapporterad tid');
 
-                cb(times);
-            });
-        }); 
+            cb(times);
+        });
     });
-}
+}*/
 
-function mailContents(weekNo, times) {
+/*function mailContents(weekNo, times) {
     return `
 Hej, rapport för v${weekNo}
 
@@ -39,7 +37,7 @@ Tot: ${times.visby + times.distans}h
 
 Mvh
 `;
-}
+}*/
 
 function getCookie(cb) {
     https.request({
@@ -154,5 +152,6 @@ function postFormData(path, formData, cookie, cb) {
 
 module.exports = {
     getCookie,
-    timesForWeek
+    login,
+    timeReportingYearWeek
 };
