@@ -4,54 +4,30 @@ const https = require('https');
 const querystring = require('querystring');
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
-const vecka = require('vecka');
-const fs = require('fs');
-const configurationFile = 'config.json';
-const year = new Date().getFullYear();
 
-let weekNo, mayaUsername, mayaPassword, config;
-let mayaProject = 'RAÄ Systemutveckling';
+const mayaProjectNames = [
+    'RAÄ Systemutveckling',
+    'Raä - Frontend'
+];
 
-try {
-    config = JSON.parse(fs.readFileSync(configurationFile));
+function timesForWeek(year, weekNo, mayaUsername, mayaPassword, cb) {
+    if (!Number.isInteger(year) || year < 0) throw 'År måste vara ett positivt heltal';
+    if (!Number.isInteger(weekNo) || weekNo < 1 || weekNo > 52) throw 'Veckonummer måste vara ett heltal mellan 1 och 52';
+
+    getCookie((cookie, err) => {
+        if (err) return cb(undefined, 'Misslyckades med att hämta sessionskaka');
+
+        login(mayaUsername, mayaPassword, cookie, (body, err) => {
+            if (err) return cb(undefined, 'Misslyckades med att logga in');
+
+            timeReportingYearWeek(year, weekNo, cookie, (times, err) => {
+                if (err) return cb(undefined, 'Misslyckades med att hämta inrapporterad tid');
+
+                cb(times);
+            });
+        }); 
+    });
 }
-catch (err) {
-}
-
-if (process.argv.length === 2 + 2) {
-    weekNo = parseInt(process.argv[2]);
-    mayaUsername = process.argv[3];
-    mayaPassword = process.argv[4] || '';
-}
-else if (config) {
-    weekNo = vecka.nu();
-    mayaUsername = config.username;
-    mayaPassword = config.password;
-    mayaProject = config.project;
-}
-else {
-    return console.error('Usage: nilleglad veckonummer Maya-användarnamn [Maya-lösenord]');
-}
-
-if (weekNo < 1 || weekNo > 52) {
-    return console.error('Veckonummer måste vara mellan 1 och 52');
-}
-
-console.info('Hämtar rapporterad RAÄ-tid för vecka', weekNo + '..');
-
-getCookie((cookie, err) => {
-    if (err) return console.error('Misslyckades med att hämta sessionskaka');
-
-    login(mayaUsername, mayaPassword, cookie, (body, err) => {
-        if (err) return console.error('Misslyckades med att logga in');
-
-        timeReportingYearWeek(year, weekNo, cookie, (times, err) => {
-            if (err) return console.error('Misslyckades med att hämta inrapporterad tid');
-
-            console.info(mailContents(weekNo, times));
-        });
-    }); 
-});
 
 function mailContents(weekNo, times) {
     return `
@@ -87,11 +63,11 @@ function getCookie(cb) {
     }).end();
 }
 
-function parseRaaTimes(html) {
+function parseRaaTimes(mayaProjectNames, html) {
     const $ = cheerio.load(html);
 
     const rows = $('tr:not(:first-child)', 'form[name="projActForm"] > table:first-child');
-    const raaRows = rows.filter((i, tr) => $('a', tr).text().startsWith(mayaProject));
+    const raaRows = rows.filter((i, tr) => mayaProjectNames.filter(pname => $('a', tr).text().startsWith(pname)).length > 0);
 
     const raaVisbyRows = raaRows.filter((i, tr) => $('td', tr).text().indexOf('Visby') > -1);
     const raaDistansRows = raaRows.filter((i, tr) => $('td', tr).text().indexOf('distans') > -1);
@@ -128,7 +104,7 @@ function timeReportingYearWeek(year, weekNo, cookie, cb) {
     postFormData('/maya/ASP/PersonPlanning/TimeReportingAttestDayDate.asp', postData, cookie, (body, err) => {
         if (err) return cb(undefined, err);
 
-        cb(parseRaaTimes(body));
+        cb(parseRaaTimes(mayaProjectNames, body));
     });
 }
 
@@ -175,3 +151,8 @@ function postFormData(path, formData, cookie, cb) {
     req.write(formData)
     req.end();
 }
+
+module.exports = {
+    getCookie,
+    timesForWeek
+};
