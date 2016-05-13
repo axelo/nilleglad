@@ -1,74 +1,53 @@
 'use strict';
-
+const Promise = require('bluebird');
 const https = require('https');
 const querystring = require('querystring');
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
 
-const mayaProjectNames = [
-    'RAÄ Systemutveckling',
-    'Raä - Frontend'
-];
-
-/*function timesForWeek(year, weekNo, mayaUsername, mayaPassword, cookie, cb) {
-    if (!Number.isInteger(year) || year < 0) throw 'År måste vara ett positivt heltal';
-    if (!Number.isInteger(weekNo) || weekNo < 1 || weekNo > 52) throw 'Veckonummer måste vara ett heltal mellan 1 och 52';
-
-    if (err) return cb(undefined, 'Misslyckades med att hämta sessionskaka');
-
-    login(mayaUsername, mayaPassword, cookie, (body, err) => {
-        if (err) return cb(undefined, 'Misslyckades med att logga in');
-
-        timeReportingYearWeek(year, weekNo, cookie, (times, err) => {
-            if (err) return cb(undefined, 'Misslyckades med att hämta inrapporterad tid');
-
-            cb(times);
-        });
+function login(username, password) {
+    const postData = querystring.stringify({
+        Username: username,
+        Password: password
     });
-}*/
 
-/*function mailContents(weekNo, times) {
-    return `
-Hej, rapport för v${weekNo}
+    let loginCookie;
 
-Visby: ${times.visby}h
-Sthlm: ${times.distans}h
-Tot: ${times.visby + times.distans}h
-
-Mvh
-`;
-}*/
-
-function getCookie(cb) {
-    https.request({
-        hostname: 'maya.decerno.se',
-        port: 443,
-        path: '/maya/ASP/Login/login.asp',
-        agent: false,
-        headers: {
-            'User-Agent': 'nilleglad',
-            accept: '*/*'
-        },
-        method: 'HEAD'
-    }, res => {
-        if (res.statusCode !== 200) return cb(undefined, res.statusCode);
-
-        const cookie = (res.headers['set-cookie'] || '').toString().split('; ')[0];
-
-        cb(cookie);
-    }).on('error', err => {
-        cb(undefined, err);
-    }).end();
+    return cookie()
+        .then(cookie => {
+            loginCookie = cookie;
+            return postFormData(cookie, '/maya/ASP/Login/loginAuthorizer.asp', postData)
+        })
+        .then(body => loginCookie);
 }
 
-function parseRaaTimes(mayaProjectNames, html) {
+function timeReportingYearWeek(cookie, year, weekNo) {
+    const postData = querystring.stringify({
+        startWeek: year + '-' + ((weekNo < 10 ? '0' : '') + weekNo),
+        formMode: '',
+        ProjectID: '',
+        TaskRecordNo: '',
+        RecordNo: '',
+        weekNo: '',
+        startDate: '',
+        endDate: '',
+        fromAttest: '',
+        fromOrderNotReady: '',
+        fromFakturaAttest: ''
+    });
+
+    return postFormData(cookie, '/maya/ASP/PersonPlanning/TimeReportingAttestDayDate.asp', postData)
+        .then(body => parseRaaTimes(body));
+}
+
+function parseRaaTimes(html) {
     const $ = cheerio.load(html);
 
     const rows = $('tr:not(:first-child)', 'form[name="projActForm"] > table:first-child');
-    const raaRows = rows.filter((i, tr) => mayaProjectNames.filter(pname => $('a', tr).text().startsWith(pname)).length > 0);
+    const raaRows = rows.filter((i, tr) => $('a', tr).text().toLowerCase().startsWith('raä '));
 
-    const raaVisbyRows = raaRows.filter((i, tr) => $('td', tr).text().indexOf('Visby') > -1);
-    const raaDistansRows = raaRows.filter((i, tr) => $('td', tr).text().indexOf('distans') > -1);
+    const raaVisbyRows = raaRows.filter((i, tr) => $('td', tr).text().toLowerCase().indexOf('visby') > -1);
+    const raaDistansRows = raaRows.filter((i, tr) => $('td', tr).text().toLowerCase().indexOf('distans') > -1);
 
     const visbyTime = $('td[id^=activityProjTotal]', raaVisbyRows)
         .map((i, totTimeTd) => parseFloat($(totTimeTd).text())).get()
@@ -84,74 +63,67 @@ function parseRaaTimes(mayaProjectNames, html) {
     };
 }
 
-function timeReportingYearWeek(year, weekNo, cookie, cb) {
-    const postData = querystring.stringify({
-        startWeek: year + '-' + ((weekNo < 10 ? '0' : '') + weekNo),
-        formMode: '',
-        ProjectID: '',
-        TaskRecordNo: '',
-        RecordNo: '',
-        weekNo: '',
-        startDate: '',
-        endDate: '',
-        fromAttest: '',
-        fromOrderNotReady: '',
-        fromFakturaAttest: ''
-    });
+function cookie() {
+    return new Promise(function(resolve, reject) {
+        https.request({
+            hostname: 'maya.decerno.se',
+            port: 443,
+            path: '/maya/ASP/Login/login.asp',
+            agent: false,
+            headers: {
+                'User-Agent': 'nilleglad',
+                accept: '*/*'
+            },
+            method: 'HEAD'
+        }, res => {
+            if (res.statusCode !== 200) return reject(res.statusCode);
 
-    postFormData('/maya/ASP/PersonPlanning/TimeReportingAttestDayDate.asp', postData, cookie, (body, err) => {
-        if (err) return cb(undefined, err);
-
-        cb(parseRaaTimes(mayaProjectNames, body));
+            const cookie = (res.headers['set-cookie'] || '').toString().split('; ')[0];
+            resolve(cookie);
+        }).on('error', err => {
+            reject(err);
+        }).end();
     });
 }
 
-function login(username, password, cookie, cb) {
-    const postData = querystring.stringify({
-        Username: username,
-        Password: password
-    });
+function postFormData(cookie, path, formData) {
+    return new Promise(function(resolve, reject) {
+        const req = https.request({
+            hostname: 'maya.decerno.se',
+            port: 443,
+            path: path,
+            agent: false,
+            headers: {
+                'User-Agent': 'nilleglad',
+                accept: '*/*',
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cookie': cookie,
+                'Content-Length': Buffer.byteLength(formData)
+            },
+            method: 'POST',
+            encoding: null
+        }, res => {
+            if (res.statusCode !== 200) return reject({ statusCode: res.statusCode, headers: res.headers });
 
-    postFormData('/maya/ASP/Login/loginAuthorizer.asp', postData, cookie, cb);
-}
+            const buffers = [];
 
-function postFormData(path, formData, cookie, cb) {
-    const req = https.request({
-        hostname: 'maya.decerno.se',
-        port: 443,
-        path: path,
-        agent: false,
-        headers: {
-            'User-Agent': 'nilleglad',
-            accept: '*/*',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cookie': cookie,
-            'Content-Length': Buffer.byteLength(formData)
-        },
-        method: 'POST',
-        encoding: null
-    }, res => {
-        if (res.statusCode !== 200) return cb(undefined, { statusCode: res.statusCode, headers: res.headers });
+            res.on('data', chunk => buffers.push(chunk));
+            res.on('end', () => {
+                const bodyBuffer = Buffer.concat(buffers);
+                const body = iconv.decode(bodyBuffer, 'win1252');
 
-        const buffers = [];
-
-        res.on('data', chunk => buffers.push(chunk));
-        res.on('end', () => {
-            const bodyBuffer = Buffer.concat(buffers);
-            const body = iconv.decode(bodyBuffer, 'win1252');
-
-            cb(body);
+                resolve(body);
+            });
         });
+
+        req.on('error', err => reject(err));
+
+        req.write(formData)
+        req.end();
     });
-
-    req.on('error', err => cb(undefined, err));
-
-    req.write(formData)
-    req.end();
 }
 
 module.exports = {
-    getCookie,
     login,
     timeReportingYearWeek
 };
