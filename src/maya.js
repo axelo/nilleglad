@@ -6,23 +6,38 @@ const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
 
 function login(username, password) {
-    const postData = querystring.stringify({
+    const form = {
         Username: username,
         Password: password
-    });
+    };
 
     let loginCookie;
 
     return cookie()
         .then(cookie => {
             loginCookie = cookie;
-            return postFormData(cookie, '/maya/ASP/Login/loginAuthorizer.asp', postData)
+            return postForm(cookie, '/maya/ASP/Login/loginAuthorizer.asp', form)
         })
-        .then(body => loginCookie);
+        .then(result => {
+            return loginCookie
+        });
+}
+
+function person(cookie) {
+    return request({
+        path: 'https://maya.decerno.se/maya/ASP/Main/topRight.asp',
+        method: 'GET',
+        headers: {
+            'Cookie': cookie
+        }
+    })
+    .then(result => {
+        return parsePerson(result.body);
+    });
 }
 
 function timeReportingYearWeek(cookie, year, weekNo) {
-    const postData = querystring.stringify({
+    const form = {
         startWeek: year + '-' + ((weekNo < 10 ? '0' : '') + weekNo),
         formMode: '',
         ProjectID: '',
@@ -34,10 +49,87 @@ function timeReportingYearWeek(cookie, year, weekNo) {
         fromAttest: '',
         fromOrderNotReady: '',
         fromFakturaAttest: ''
-    });
+    };
 
-    return postFormData(cookie, '/maya/ASP/PersonPlanning/TimeReportingAttestDayDate.asp', postData)
-        .then(body => parseRaaTimes(body));
+    return postForm(cookie, '/maya/ASP/PersonPlanning/TimeReportingAttestDayDate.asp', form)
+        .then(result => parseRaaTimes(result.body));
+}
+
+function cookie() {
+    return request(requestOptions({
+        path: '/maya/ASP/Login/login.asp',
+        method: 'HEAD'
+    }))
+    .then(result => {
+        const res = result.res;
+        const cookie = (res.headers['set-cookie'] || '').toString().split('; ')[0];
+        return cookie;
+    });
+}
+
+function postForm(cookie, path, form) {
+    const formData = querystring.stringify(form);
+
+    return request({
+        path: path,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': cookie
+        }
+    }, formData);
+}
+
+function request(options, data) {
+    return new Promise(function(resolve, reject) {
+        const reqOptions = requestOptions(options);
+
+        if (data) {
+            Object.assign(reqOptions.headers, {
+                'Content-Length': Buffer.byteLength(data)
+            });
+        }
+
+        const req = https.request(reqOptions, res => {
+            if (res.statusCode !== 200) {
+                return reject({ res });
+            }
+            
+            const buffers = [];
+
+            res.on('data', chunk => buffers.push(chunk));
+            res.on('end', () => {
+                const bodyBuffer = Buffer.concat(buffers);
+                const body = iconv.decode(bodyBuffer, 'win1252');
+
+                resolve({ res, body });
+            });
+        });
+
+        req.on('error', err => {
+            reject({ err });
+        });
+
+        if (data) req.write(data);
+
+        req.end();
+    });
+}
+
+function requestOptions(extraOptions) {
+    const options = Object.assign({
+        hostname: 'maya.decerno.se',
+        port: 443,
+        agent: false,
+        encoding: null
+    }, extraOptions);
+
+    options.headers = Object.assign({
+            'User-Agent': 'nilleglad',
+            accept: '*/*'
+    }, extraOptions.headers);
+
+    return options;
 }
 
 function parseRaaTimes(html) {
@@ -63,67 +155,34 @@ function parseRaaTimes(html) {
     };
 }
 
-function cookie() {
-    return new Promise(function(resolve, reject) {
-        https.request({
-            hostname: 'maya.decerno.se',
-            port: 443,
-            path: '/maya/ASP/Login/login.asp',
-            agent: false,
-            headers: {
-                'User-Agent': 'nilleglad',
-                accept: '*/*'
-            },
-            method: 'HEAD'
-        }, res => {
-            if (res.statusCode !== 200) return reject(res.statusCode);
+function parsePerson(html) {
+    const $ = cheerio.load(html);
+    const link = $('a', 'table');
+    const href = link.attr('href');
 
-            const cookie = (res.headers['set-cookie'] || '').toString().split('; ')[0];
-            resolve(cookie);
-        }).on('error', err => {
-            reject(err);
-        }).end();
-    });
-}
+    if (!href) throw 'Invalid html';
 
-function postFormData(cookie, path, formData) {
-    return new Promise(function(resolve, reject) {
-        const req = https.request({
-            hostname: 'maya.decerno.se',
-            port: 443,
-            path: path,
-            agent: false,
-            headers: {
-                'User-Agent': 'nilleglad',
-                accept: '*/*',
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Cookie': cookie,
-                'Content-Length': Buffer.byteLength(formData)
-            },
-            method: 'POST',
-            encoding: null
-        }, res => {
-            if (res.statusCode !== 200) return reject({ statusCode: res.statusCode, headers: res.headers });
+    const personIdStartIndex = href.indexOf('PersonID=');
 
-            const buffers = [];
+    if (personIdStartIndex < 0) throw 'Invalid html';
 
-            res.on('data', chunk => buffers.push(chunk));
-            res.on('end', () => {
-                const bodyBuffer = Buffer.concat(buffers);
-                const body = iconv.decode(bodyBuffer, 'win1252');
+    const personId = parseInt(href.substring(personIdStartIndex + 'PersonID='.length));
 
-                resolve(body);
-            });
-        });
+    if (isNaN(personId)) throw 'Invalid PersonID';
 
-        req.on('error', err => reject(err));
+    const names = link.text().split(', ');
+    const firstName = names.length === 2 ? names[1] : names[0];
+    const familyName = names.length === 2 ? names[0] : '';
 
-        req.write(formData)
-        req.end();
-    });
+    return {
+        id: personId,
+        firstName,
+        familyName
+    };
 }
 
 module.exports = {
     login,
+    person,
     timeReportingYearWeek
 };
