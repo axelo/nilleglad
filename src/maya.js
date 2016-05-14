@@ -56,10 +56,10 @@ function timeReportingYearWeek(cookie, year, weekNo) {
 }
 
 function cookie() {
-    return request(requestOptions({
+    return request({
         path: '/maya/ASP/Login/login.asp',
         method: 'HEAD'
-    }))
+    })
     .then(result => {
         const res = result.res;
         const cookie = (res.headers['set-cookie'] || '').toString().split('; ')[0];
