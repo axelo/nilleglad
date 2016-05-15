@@ -23,6 +23,21 @@ Mvh
 ${person.firstName} ${person.familyName}`;
 }
 
+function getWeekNumber(d) {
+    // Copy date so don't modify original
+    d = new Date(+d);
+    d.setHours(0,0,0);
+    // Set to nearest Thursday: current date + 4 - current day number
+    // Make Sunday's day number 7
+    d.setDate(d.getDate() + 4 - (d.getDay()||7));
+    // Get first day of year
+    var yearStart = new Date(d.getFullYear(),0,1);
+    // Calculate full weeks to nearest Thursday
+    var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+    // Return array of year and week number
+    return [d.getFullYear(), weekNo];
+}
+
 app.use(bodyParser.urlencoded({
     extended: true
 })); 
@@ -114,7 +129,7 @@ app.get('/:year/:week', function(req, res) {
 
 app.get('*', function(req, res) {
     const year = new Date().getFullYear();
-    const week = vecka.nu();
+    const week = getWeekNumber(new Date());
 
     res.redirect(`/${year}/${week}`);
 });
@@ -122,3 +137,4 @@ app.get('*', function(req, res) {
 app.listen(process.env.PORT || 3000);
 
 console.log('nilleglad started in', process.env.NODE_ENV || 'development', 'mode');
+
