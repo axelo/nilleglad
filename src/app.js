@@ -41,11 +41,16 @@ app.use('/styles.css', express.static('views/styles.css'));
 app.use('/login', express.static('views/login.html'));
 
 app.post('/login',  (req, res) => {
+    const refererUrl = (req.headers.referer || '');
+    const backUrl = refererUrl.indexOf('?referer=') < 0
+        ? '/'
+        : refererUrl.substring(refererUrl.indexOf('?referer=') + '?referer='.length);
+
     maya
         .login(req.body.Username, req.body.Password)
         .then(cookie => {
             res.header('set-cookie', cookie);
-            res.redirect('/');
+            res.redirect(backUrl);
         })
         .catch(err => {
             res.status(400);
@@ -66,15 +71,15 @@ app.get('/logout', (req, res) => {
             res.status(400);
             res.redirect('/');
         });
-})
+});
 
-app.get('/', function(req, res) {
+app.get('/:year/:week', function(req, res) {
     const cookie = req.headers.cookie;
 
     if (!cookie) return res.redirect('/login');
 
-    const year = new Date().getFullYear();
-    const week = vecka.nu();
+    const year = parseInt(req.params.year);
+    const week = parseInt(req.params.week);
 
     Promise.join(
         maya.person(cookie),
@@ -96,8 +101,8 @@ app.get('/', function(req, res) {
             res.send(reportHtml);
     })
     .catch(err => {
-        if (err === 'invalid html') {
-            return res.redirect('/login');
+        if (err === 'invalid html' || err.res) {
+            return res.redirect('/login?referer=' + req.url);
         }
 
         console.error('Error', err);
@@ -105,6 +110,13 @@ app.get('/', function(req, res) {
         res.status(500);
         res.send(err);
     })
+});
+
+app.get('*', function(req, res) {
+    const year = new Date().getFullYear();
+    const week = vecka.nu();
+
+    res.redirect(`/${year}/${week}`);
 });
 
 app.listen(3000);
