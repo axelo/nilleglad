@@ -13,6 +13,16 @@ app.use(bodyParser.urlencoded({
     extended: true
 })); 
 
+app.use(function (req, res, next) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    if (isProduction && req.header('x-forwarded-proto') !== 'https') {
+        return res.redirect(`https://${req.get('Host')}${req.url}`);
+    }
+
+    next();
+});
+
 app.use('/login', express.static('views/login.html'));
 
 app.post('/login',  (req, res) => {
@@ -61,3 +71,5 @@ app.get('/', function(req, res) {
 });
 
 app.listen(3000);
+
+console.log('nilleglad started in', process.env.NODE_ENV || 'development', 'mode');
