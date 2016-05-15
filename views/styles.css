@@ -18,6 +18,12 @@ body {
     color: inherit;
 }
 
+input {
+    -webkit-appearance: none;
+    -webkit-border-radius:0; 
+    border-radius:0;
+}
+
 #login,
 #report {
     display: flex;
