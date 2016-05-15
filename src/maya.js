@@ -23,9 +23,22 @@ function login(username, password) {
         });
 }
 
+function logout(cookie) {
+    return request({
+        path: '/maya/asp/login/logout.asp',
+        method: 'GET',
+        headers: {
+            'Cookie': cookie
+        }
+    })
+    .then(result => {
+        return 'success';
+    });
+}
+
 function person(cookie) {
     return request({
-        path: 'https://maya.decerno.se/maya/ASP/Main/topRight.asp',
+        path: '/maya/ASP/Main/topRight.asp',
         method: 'GET',
         headers: {
             'Cookie': cookie
@@ -151,7 +164,8 @@ function parseRaaTimes(html) {
 
     return {
         distans: distansTime,
-        visby: visbyTime
+        visby: visbyTime,
+        total: distansTime + visbyTime
     };
 }
 
@@ -160,15 +174,15 @@ function parsePerson(html) {
     const link = $('a', 'table');
     const href = link.attr('href');
 
-    if (!href) throw 'Invalid html';
+    if (!href) throw 'invalid html';
 
     const personIdStartIndex = href.indexOf('PersonID=');
 
-    if (personIdStartIndex < 0) throw 'Invalid html';
+    if (personIdStartIndex < 0) throw 'invalid html';
 
     const personId = parseInt(href.substring(personIdStartIndex + 'PersonID='.length));
 
-    if (isNaN(personId)) throw 'Invalid PersonID';
+    if (isNaN(personId)) throw 'invalid html';
 
     const names = link.text().split(', ');
     const firstName = names.length === 2 ? names[1] : names[0];
@@ -183,6 +197,7 @@ function parsePerson(html) {
 
 module.exports = {
     login,
+    logout,
     person,
     timeReportingYearWeek
 };

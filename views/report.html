@@ -1,15 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="sv-SE">
 <head>
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Special+Elite" rel="stylesheet">
+    <link href="/styles.css" rel="stylesheet">
+    <title>nilleglad</title>
 </head>
-<body>
-    <h1>Tidrapport v${weekNo}</h1>
-    <div>
-        <h2>${visby}h</h2>
-        <h2>${notVisby}h</h2>
-    </div>
-    <div>
-        <h3>Mvh ${person}</h3>
+<body id="report">
+    <div id="report-content">
+        <div id="report-title">NILLEGLAD</div>
+        <div id="report-toolbar">
+            <a href="/logout">Maila</a>
+            <a href="/logout">Kopiera</a>
+            <a href="/logout">Logga ut</a>
+        </div>
+        <div id="report-mail">
+            Hej,<br>
+            <br>
+            Tidrapport för v${weekNo}<br>
+            <br>
+            Visby: ${visby}h<br>
+            Stockholm: ${notVisby}h<br>
+            <br>
+            Totalt: ${total}h<br>
+            <br>
+            Mvh<br>
+            ${person}
+        </div>
+        
+
     </div>
 </body>
 </html>

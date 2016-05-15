@@ -23,6 +23,7 @@ app.use(function (req, res, next) {
     next();
 });
 
+app.use('/styles.css', express.static('views/styles.css'));
 app.use('/login', express.static('views/login.html'));
 
 app.post('/login',  (req, res) => {
@@ -37,6 +38,21 @@ app.post('/login',  (req, res) => {
             res.redirect('/login');
         })
 });
+
+app.get('/logout', (req, res) => {
+    const cookie = req.headers.cookie;
+
+    if (!cookie) return res.redirect('/');
+
+    maya.logout(cookie)
+        .then(result => {
+            res.redirect('/login');
+        })
+        .catch(err => {
+            res.status(400);
+            res.redirect('/');
+        });
+})
 
 app.get('/', function(req, res) {
     const cookie = req.headers.cookie;
@@ -57,12 +73,17 @@ app.get('/', function(req, res) {
                 .replace(new RegExp('\\$\\{weekNo\\}', 'g'), week)
                 .replace(new RegExp('\\$\\{visby\\}', 'g'), times.visby)
                 .replace(new RegExp('\\$\\{notVisby\\}', 'g'), times.distans)
+                .replace(new RegExp('\\$\\{total\\}', 'g'), times.total)
                 .replace(new RegExp('\\$\\{person\\}', 'g'), person.firstName + ' ' + person.familyName);
 
             res.setHeader('Content-Type', 'text/html');
             res.send(reportHtml);
     })
     .catch(err => {
+        if (err === 'invalid html') {
+            return res.redirect('/login');
+        }
+
         console.error('Error', err);
 
         res.status(500);

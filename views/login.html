@@ -1,14 +1,24 @@
-<html>
+<!DOCTYPE html>
+<html lang="sv-SE">
 <head>
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Special+Elite" rel="stylesheet">
+    <link href="/styles.css" rel="stylesheet">
+    <title>nilleglad</title>
 </head>
 <body>
-LOGGA IN
 
-<form action="/login" method="POST">
-    <div>Användarnamn: <input type="text" name="Username"></div>
-    <div>Lösendord: <input type="password" name="Password"></div>
-    <input type="submit" value="Do it">
-</form>
+<div id="login">
+    <div id="login-content">
+        <div id="login-title">NILLEGLAD</div>
+        <form id="login-form" action="/login" method="POST">
+            <input class="login-form-text" type="text" name="Username" placeholder="ANVÄNDARNAMN" autofocus="autofocus">
+            <input class="login-form-text" type="password" name="Password" placeholder="LÖSENORD">
+            <input id="login-form-submit" type="submit" value="LOGGA IN">
+        </form>
+    </div>
+</div>
 
 </body>
 </html>
