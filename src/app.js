@@ -23,19 +23,21 @@ Mvh
 ${person.firstName} ${person.familyName}`;
 }
 
-function getWeekNumber(d) {
-    // Copy date so don't modify original
-    d = new Date(+d);
-    d.setHours(0,0,0);
-    // Set to nearest Thursday: current date + 4 - current day number
-    // Make Sunday's day number 7
-    d.setDate(d.getDate() + 4 - (d.getDay()||7));
-    // Get first day of year
-    var yearStart = new Date(d.getFullYear(),0,1);
-    // Calculate full weeks to nearest Thursday
-    var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-    // Return array of year and week number
-    return [d.getFullYear(), weekNo];
+function getWeekNumber(date) {
+    const target = new Date(date.valueOf());
+    const dayNumber = (date.getUTCDay() + 6) % 7;
+
+    target.setUTCDate(target.getUTCDate() - dayNumber + 3);
+    
+    const firstThursday = target.valueOf();
+    
+    target.setUTCMonth(0, 1);
+
+    if (target.getUTCDay() !== 4) {
+        target.setUTCMonth(0, 1 + ((4 - target.getUTCDay()) + 7) % 7);
+    }
+
+    return Math.ceil((firstThursday - target) /  (7 * 24 * 3600 * 1000)) + 1;
 }
 
 app.use(bodyParser.urlencoded({
