@@ -9,12 +9,13 @@ html, body {
 body {
     font-size: 16px;
     font-family: 'Special Elite', cursive;
-    background-color: rgb(138, 116, 116);
+    color: #000;
 }
 
 * {
     box-sizing: inherit;
     font-family: inherit;
+    color: inherit;
 }
 
 #login,
@@ -33,14 +34,11 @@ body {
     align-items: center;
     font-size: 2rem;
     height: 45px;
-    background-color: rgb(231, 152, 156);
-    color: #eee;
 }
 
 #login-content,
 #report-content {
     width: 320px;
-    background-color: #dfdfdf;
 }
 
 #login-form,
@@ -50,9 +48,9 @@ body {
 }
 
 #login-form-submit {
-    background-color: rgb(231, 152, 156);
-    color: #eee;
     padding: 0;
+    background-color: #333;
+    color: #fff;
 }
 
 #login-form > input {
@@ -70,9 +68,15 @@ body {
 
 #report-toolbar {
     display: flex;
+    padding: 20px;
 }
 
-#report-toolbar > a {
+#report-toolbar > div {
     display: block;
     flex: 1;
+}
+
+#report-mail {
+    padding: 20px;
+    line-height: 1.5rem;
 }

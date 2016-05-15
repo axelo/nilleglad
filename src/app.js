@@ -9,6 +9,20 @@ const vecka = require('vecka');
 
 const maya = require('./maya.js');
 
+function mailBody(week, times, person) {
+    return `Hej,
+
+Tidrapport för v${week}
+
+Visby: ${times.visby}h
+Stockholm: ${times.distans}h
+
+Totalt: ${times.total}h
+
+Mvh
+${person.firstName} ${person.familyName}`;
+}
+
 app.use(bodyParser.urlencoded({
     extended: true
 })); 
@@ -67,14 +81,16 @@ app.get('/', function(req, res) {
         maya.timeReportingYearWeek(cookie, year, week),
         fs.readFileAsync('views/report.html', 'UTF-8'),
         (person, times, reportHtmlTemplateBuffer) => {
-            const reportHtmlTemplate = reportHtmlTemplateBuffer.toString();
-
-            const reportHtml = reportHtmlTemplate
-                .replace(new RegExp('\\$\\{weekNo\\}', 'g'), week)
-                .replace(new RegExp('\\$\\{visby\\}', 'g'), times.visby)
-                .replace(new RegExp('\\$\\{notVisby\\}', 'g'), times.distans)
-                .replace(new RegExp('\\$\\{total\\}', 'g'), times.total)
-                .replace(new RegExp('\\$\\{person\\}', 'g'), person.firstName + ' ' + person.familyName);
+            const mail = mailBody(week, times, person);
+            const mailString = '\'' + mail.replace(/\n/g, '\\n') + '\'';
+            const mailBr = mail.replace(/\n/g, '<br>');
+            const mailHref = mail.replace(/\n/g, '%0D%0A');
+            
+            const reportHtml = reportHtmlTemplateBuffer.toString()
+                .replace(new RegExp('\\$\\{week\\}', 'g'), week)
+                .replace(new RegExp('\\$\\{mailString\\}', 'g'), mailString)
+                .replace(new RegExp('\\$\\{mailBr\\}', 'g'), mailBr)
+                .replace(new RegExp('\\$\\{mailHref\\}', 'g'), mailHref);
 
             res.setHeader('Content-Type', 'text/html');
             res.send(reportHtml);

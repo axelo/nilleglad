@@ -11,25 +11,28 @@
     <div id="report-content">
         <div id="report-title">NILLEGLAD</div>
         <div id="report-toolbar">
-            <a href="/logout">Maila</a>
-            <a href="/logout">Kopiera</a>
-            <a href="/logout">Logga ut</a>
+            <div><a href="mailto:?subject=Tidrapport för v${week}&body=${mailHref}">Maila</a></div>
+            <div id="report-toolbar-copy"><a href="#" onclick="copyToClipboard(${mailString}); event.preventDefault();">Kopiera</a></div>
+            <div style="text-align:right"><a href="/logout">Logga ut</a></div>
         </div>
         <div id="report-mail">
-            Hej,<br>
-            <br>
-            Tidrapport för v${weekNo}<br>
-            <br>
-            Visby: ${visby}h<br>
-            Stockholm: ${notVisby}h<br>
-            <br>
-            Totalt: ${total}h<br>
-            <br>
-            Mvh<br>
-            ${person}
+            ${mailBr}
         </div>
-        
-
     </div>
+    <script>
+        function copyToClipboard(text) {
+            var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            if (iOS) return alert('Stöds inte på iOS ännu');
+
+            var copyElement = document.createElement('textarea');
+            copyElement.value = text;
+            copyElement = document.body.appendChild(copyElement);
+            copyElement.select();
+            document.execCommand('copy');
+            copyElement.remove();
+        }
+
+    </script>
 </body>
 </html>
