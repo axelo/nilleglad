@@ -119,6 +119,6 @@ app.get('*', function(req, res) {
     res.redirect(`/${year}/${week}`);
 });
 
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
 
 console.log('nilleglad started in', process.env.NODE_ENV || 'development', 'mode');
