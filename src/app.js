@@ -61,7 +61,7 @@ app.use(function (req, res, next) {
 app.use('/styles.css', express.static('views/styles.css'));
 app.use('/login', express.static('views/login.html'));
 
-app.post('/login',  (req, res) => {
+app.post('login',  (req, res) => {
     const refererUrl = (req.headers.referer || '');
     const backUrl = refererUrl.indexOf('?referer=') < 0
         ? '/'
@@ -75,11 +75,11 @@ app.post('/login',  (req, res) => {
         })
         .catch(err => {
             res.status(400);
-            res.redirect('/login');
+            res.redirect('login');
         })
 });
 
-app.get('/logout', (req, res) => {
+app.get('logout', (req, res) => {
     const cookie = req.headers.cookie;
 
     if (!cookie) return res.redirect('/');
@@ -140,7 +140,7 @@ app.get('*', function(req, res) {
     const year = new Date().getFullYear();
     const week = getWeekNumber(new Date());
 
-    res.redirect(`/${year}-${week}`);
+    res.redirect(`${year}-${week}`);
 });
 
 const port = process.env.PORT || 3000;
