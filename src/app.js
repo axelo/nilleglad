@@ -23,6 +23,10 @@ Mvh
 ${person.firstName} ${person.familyName}`;
 }
 
+function getYear(date) {
+    return date.getFullYear();
+}
+
 function getWeekNumber(date) {
     const target = new Date(date.valueOf());
     const dayNumber = (date.getUTCDay() + 6) % 7;
@@ -90,13 +94,16 @@ app.get('/logout', (req, res) => {
         });
 });
 
-app.get('/:year/:week', function(req, res) {
+app.get('/:yearAndWeek', function(req, res) {
     const cookie = req.headers.cookie;
 
     if (!cookie) return res.redirect('/login');
 
-    const year = parseInt(req.params.year);
-    const week = parseInt(req.params.week);
+    const now = new Date();
+
+    const yearAndWeek = req.params.yearAndWeek.split('-');
+    const year = parseInt(yearAndWeek[0]) || getYear(now);
+    const week = parseInt(yearAndWeek[1]) || getWeekNumber(now);
 
     Promise.join(
         maya.person(cookie),
@@ -118,7 +125,7 @@ app.get('/:year/:week', function(req, res) {
             res.send(reportHtml);
     })
     .catch(err => {
-        if (err === 'invalid html' || err.res) {
+        if (err === 'invalid html' || err.res || err.statusCode) {
             return res.redirect('/login?referer=' + req.url);
         }
 
@@ -133,10 +140,11 @@ app.get('*', function(req, res) {
     const year = new Date().getFullYear();
     const week = getWeekNumber(new Date());
 
-    res.redirect(`/${year}/${week}`);
+    res.redirect(`/${year}-${week}`);
 });
 
-app.listen(process.env.PORT || 3000);
+const port = process.env.PORT || 3000;
 
-console.log('nilleglad started in', process.env.NODE_ENV || 'development', 'mode');
+app.listen(port);
 
+console.log('nilleglad started in', process.env.NODE_ENV || 'development', 'mode', 'on port', port);
