@@ -57,7 +57,7 @@ app.use(function (req, res, next) {
 
     const cookie = req.headers.cookie;
 
-    if (!cookie && !req.url !== '/login') return res.redirect('/login');
+    if (!cookie && req.url !== '/login') return res.redirect('/login');
 
     next();
 });
