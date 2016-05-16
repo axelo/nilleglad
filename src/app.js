@@ -48,6 +48,9 @@ app.use(bodyParser.urlencoded({
     extended: true
 })); 
 
+app.use('/styles.css', express.static('views/styles.css'));
+app.use('/login', express.static('views/login.html'));
+
 app.use(function (req, res, next) {
     const isProduction = process.env.NODE_ENV === 'production';
 
@@ -61,9 +64,6 @@ app.use(function (req, res, next) {
 
     next();
 });
-
-app.use('/styles.css', express.static('views/styles.css'));
-app.use('/login', express.static('views/login.html'));
 
 app.post('/login',  (req, res) => {
     const refererUrl = (req.headers.referer || '');
