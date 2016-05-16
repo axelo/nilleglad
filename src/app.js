@@ -55,6 +55,10 @@ app.use(function (req, res, next) {
         return res.redirect(`https://${req.get('Host')}${req.url}`);
     }
 
+    const cookie = req.headers.cookie;
+
+    if (!cookie && !req.url !== '/login') return res.redirect('/login');
+
     next();
 });
 
@@ -94,18 +98,41 @@ app.get('/logout', (req, res) => {
         });
 });
 
-app.get('/(:yearAndWeek)?', function(req, res) {
-    const cookie = req.headers.cookie;
+app.get('/:year(\\d\\d\\d\\d)-:week(\\d\\d?)', function(req, res) {
+    const year = parseInt(req.params.year);
+    const week = parseInt(req.params.week);
 
-    if (!cookie) return res.redirect('/login');
+    handleResponse(renderReport(req.headers.cookie, year, week), req, res);
+});
 
+app.get('/', (req, res) => {
     const now = new Date();
+    const year = getYear(now);
+    const week = getWeekNumber(now);
 
-    const yearAndWeek = (req.params.yearAndWeek || '').split('-');
-    const year = parseInt(yearAndWeek[0]) || getYear(now);
-    const week = parseInt(yearAndWeek[1]) || getWeekNumber(now);
+    handleResponse(renderReport(req.headers.cookie, year, week), req, res)
+});
 
-    Promise.join(
+function handleResponse(htmlPromise, req, res) {
+    htmlPromise
+        .then(html => {
+            res.setHeader('Content-Type', 'text/html');
+            res.send(html);
+        })
+        .catch(err => {
+            if (err === 'invalid html' || err.res || err.statusCode) {
+                return res.redirect('/login?referer=' + req.url);
+            }
+
+            console.error('Error', err);
+
+            res.status(500);
+            res.send(err);
+        });
+}
+
+function renderReport(cookie, year, week) {
+    return Promise.join(
         maya.person(cookie),
         maya.timeReportingYearWeek(cookie, year, week),
         fs.readFileAsync('views/report.html', 'UTF-8'),
@@ -114,34 +141,20 @@ app.get('/(:yearAndWeek)?', function(req, res) {
             const mailString = '\'' + mail.replace(/\n/g, '\\n') + '\'';
             const mailBr = mail.replace(/\n/g, '<br>');
             const mailHref = mail.replace(/\n/g, '%0D%0A');
-            
+
             const reportHtml = reportHtmlTemplateBuffer.toString()
                 .replace(new RegExp('\\$\\{week\\}', 'g'), week)
                 .replace(new RegExp('\\$\\{mailString\\}', 'g'), mailString)
                 .replace(new RegExp('\\$\\{mailBr\\}', 'g'), mailBr)
                 .replace(new RegExp('\\$\\{mailHref\\}', 'g'), mailHref);
 
-            res.setHeader('Content-Type', 'text/html');
-            res.send(reportHtml);
-    })
-    .catch(err => {
-        if (err === 'invalid html' || err.res || err.statusCode) {
-            return res.redirect('/login?referer=' + req.url);
-        }
+            return reportHtml;
+    });
+}
 
-        console.error('Error', err);
-
-        res.status(500);
-        res.send(err);
-    })
+app.get('*', (req, res) => {
+    res.redirect('/');
 });
-
-/*app.get('*', function(req, res) {
-    const year = new Date().getFullYear();
-    const week = getWeekNumber(new Date());
-
-    res.redirect(`/${year}-${week}`);
-});*/
 
 const port = process.env.PORT || 3000;
 

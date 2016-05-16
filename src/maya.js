@@ -165,7 +165,7 @@ function parseRaaTimes(html) {
     return {
         distans: distansTime,
         visby: visbyTime,
-        total: distansTime + visbyTime
+        total:  parseFloat((distansTime + visbyTime).toFixed(2))
     };
 }
 
