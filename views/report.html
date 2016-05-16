@@ -11,7 +11,7 @@
     <div id="report-content">
         <div id="report-title">NILLEGLAD</div>
         <div id="report-toolbar">
-            <div><a href="mailto:?subject=Tidrapport för v${week}&body=${mailHref}">Maila</a></div>
+            <div><a href="mailto:${mailTo}?subject=Tidrapport för v${week}&body=${mailHref}">Maila</a></div>
             <div id="report-toolbar-copy"><a href="#" onclick="copyToClipboard(${mailString}); event.preventDefault();">Kopiera</a></div>
             <div style="text-align:right"><a href="logout">Logga ut</a></div>
         </div>
