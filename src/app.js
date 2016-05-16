@@ -141,7 +141,7 @@ function renderReport(cookie, year, week) {
             const mailString = '\'' + mail.replace(/\n/g, '\\n') + '\'';
             const mailBr = mail.replace(/\n/g, '<br>');
             const mailHref = mail.replace(/\n/g, '%0D%0A');
-            const mailTo = process.env.MAILTO;
+            const mailTo = process.env.MAILTO || '';
 
             const reportHtml = reportHtmlTemplateBuffer.toString()
                 .replace(new RegExp('\\$\\{week\\}', 'g'), week)
