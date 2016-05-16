@@ -9,7 +9,7 @@
 </head>
 <body id="report">
     <div id="report-content">
-        <div id="report-title">NILLEGLAD</div>
+        <div id="report-title"><a href=".">NILLEGLAD</a></div>
         <div id="report-toolbar">
             <div><a href="mailto:${mailTo}?subject=Tidrapport för v${week}&body=${mailHref}">Maila</a></div>
             <div id="report-toolbar-copy"><a href="#" onclick="copyToClipboard(${mailString}); event.preventDefault();">Kopiera</a></div>
@@ -32,7 +32,6 @@
             document.execCommand('copy');
             copyElement.remove();
         }
-
     </script>
 </body>
 </html>
