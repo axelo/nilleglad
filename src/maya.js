@@ -13,13 +13,17 @@ function login(username, password) {
 
     let loginCookie;
 
+    console.log('Logging in');
+
     return cookie()
         .then(cookie => {
             loginCookie = cookie;
             return postForm(cookie, '/maya/ASP/Login/loginAuthorizer.asp', form)
         })
+        .then(result => person(loginCookie))
         .then(result => {
-            return loginCookie
+            console.log('result', result);
+            return Object.assign(result, { cookie: loginCookie });
         });
 }
 

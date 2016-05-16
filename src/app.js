@@ -73,8 +73,10 @@ app.post('/login',  (req, res) => {
 
     maya
         .login(req.body.Username, req.body.Password)
-        .then(cookie => {
-            res.header('set-cookie', cookie);
+        .then(user => {
+            //res.header('set-cookie', user.cookie + ';firstName=' + user.firstName);
+            res.append('Set-Cookie', user.cookie);
+            res.append('Set-Cookie', 'name=' + (user.firstName + ' ' + user.familyName).trim());
             res.redirect(backUrl);
         })
         .catch(err => {
@@ -109,6 +111,8 @@ app.get('/', (req, res) => {
     const now = new Date();
     const year = getYear(now);
     const week = getWeekNumber(now);
+
+    console.log('cookie', req.headers.cookie);
 
     handleResponse(renderReport(req.headers.cookie, year, week), req, res)
 });
