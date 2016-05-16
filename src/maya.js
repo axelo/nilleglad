@@ -64,8 +64,16 @@ function timeReportingYearWeek(cookie, year, weekNo) {
         fromFakturaAttest: ''
     };
 
+    let startReq = Date.now();
     return postForm(cookie, '/maya/ASP/PersonPlanning/TimeReportingAttestDayDate.asp', form)
-        .then(result => parseRaaTimes(result.body));
+        .then(result => {
+	 console.log('Anrop till maya: ', Date.now() - startReq);
+	let startParse = Date.now();
+	let asdf = parseRaaTimes(result.body);
+	console.log('Parsing: ', Date.now() - startParse);
+	return asdf;
+	
+	});
 }
 
 function cookie() {
@@ -112,9 +120,11 @@ function request(options, data) {
 
             res.on('data', chunk => buffers.push(chunk));
             res.on('end', () => {
-                const bodyBuffer = Buffer.concat(buffers);
+                let start = Date.now();
+		const bodyBuffer = Buffer.concat(buffers);
                 const body = iconv.decode(bodyBuffer, 'win1252');
-
+		console.log('win1252 -> utf8: ', Date.now() - start);
+		
                 resolve({ res, body });
             });
         });

@@ -132,11 +132,13 @@ function handleResponse(htmlPromise, req, res) {
 }
 
 function renderReport(cookie, year, week) {
+    const start = Date.now();
     return Promise.join(
         maya.person(cookie),
         maya.timeReportingYearWeek(cookie, year, week),
         fs.readFileAsync('views/report.html', 'UTF-8'),
         (person, times, reportHtmlTemplateBuffer) => {
+	    console.log('Maya anrop: ', Date.now() - start);
             const mail = mailBody(week, times, person);
             const mailString = '\'' + mail.replace(/\n/g, '\\n') + '\'';
             const mailBr = mail.replace(/\n/g, '<br>');
