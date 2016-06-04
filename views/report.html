@@ -11,27 +11,43 @@
     <div id="report-content">
         <div id="report-title"><a href=".">NILLEGLAD</a></div>
         <div id="report-toolbar">
-            <div><a href="mailto:${mailTo}?subject=Tidrapport för v${week}&body=${mailHref}">Maila</a></div>
-            <div id="report-toolbar-copy"><a href="#" onclick="copyToClipboard(${mailString}); event.preventDefault();">Kopiera</a></div>
+            <div><a id="mailto">Maila</a></div>
+            <div id="report-toolbar-copy"><a href="#" onclick="doCopyToClipboard(); event.preventDefault();">Kopiera</a></div>
             <div style="text-align:right"><a href="logout">Logga ut</a></div>
         </div>
         <div id="report-mail">
-            ${mailBr}
+            Hej,<br>
+            <br>
+            <div>
+                Tidrapport för v.
+                <input id="week" class="yearweek" type="text" value="${week}" size="2" oninput="doFetchReport()">
+                <input id="year" class="yearweek" type="text" value="${year}" size="4" oninput="doFetchReport()">
+            </div>
+            <br>
+            <div id="report-content">
+                <div id="fetch-failed">Misslyckades med att hämta rapport, <a href="#" onclick="event.preventDefault(); doFetchReport()">försök igen</a></div>
+
+                <div id="fetching-report">Hämtar rapport...</div>
+
+                <div id="fetched-report">
+                    Visby: <span id="times-visby"></span>h<br>
+                    Stockholm: <span id="times-distans"></span>h<br>
+                    <br>
+                    Totalt: <span id="times-total"></span>h<br>
+                    <br>
+                    Mvh<br>
+                    <span id="person-first-name"></span> <span id="person-family-name"></span>
+                </div>
+            </div>
         </div>
     </div>
     <script>
-        function copyToClipboard(text) {
-            var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-            if (iOS) return alert('Stöds inte på iOS ännu');
-
-            var copyElement = document.createElement('textarea');
-            copyElement.value = text;
-            copyElement = document.body.appendChild(copyElement);
-            copyElement.select();
-            document.execCommand('copy');
-            copyElement.remove();
-        }
+        window.INITIAL_STATE = {
+            report: ${report},
+            mailTo: '${mailTo}',
+            pendingYearWeek: {}
+        };
     </script>
+    <script src="webapp.js"></script>
 </body>
 </html>
