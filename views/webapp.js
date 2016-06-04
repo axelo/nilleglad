@@ -75,7 +75,7 @@ function render(state) {
 }
 
 function mailSubject(report) {
-    return 'Tidrapport för v.' + report.week + ' ' + report.year;
+    return 'Tidrapport för v.' + report.week;
 }
 
 function mailBody(report) {
@@ -83,7 +83,7 @@ function mailBody(report) {
 
     return 'Hej, ' + br +
         br +
-        'Tidrapport för v.' + report.week + ' ' + report.year + br +
+        'Tidrapport för v.' + report.week + br +
         br +
         'Visby: ' + report.times.visby + 'h' + br +
         'Stockholm: ' + report.times.distans + 'h' + br +
