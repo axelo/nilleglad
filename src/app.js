@@ -9,18 +9,15 @@ const vecka = require('vecka');
 
 const maya = require('./maya.js');
 
-function mailBody(week, times, person) {
-    return `Hej,
+const reportTag = {
+    report: newTag('report'),
+    week: newTag('week'),
+    year: newTag('year'),
+    mailTo: newTag('mailTo')
+};
 
-Tidrapport för v${week}
-
-Visby: ${times.visby}h
-Stockholm: ${times.distans}h
-
-Totalt: ${times.total}h
-
-Mvh
-${person.firstName} ${person.familyName}`;
+function newTag(name) {
+    return new RegExp('\\$\\{' + name + '\\}', 'g');
 }
 
 function getYear(date) {
@@ -44,6 +41,20 @@ function getWeekNumber(date) {
     return Math.ceil((firstThursday - target) /  (7 * 24 * 3600 * 1000)) + 1;
 }
 
+function getReport(cookie, year, week) {
+    return Promise.join(
+        maya.person(cookie),
+        maya.timeReportingYearWeek(cookie, year, week),
+        (person, times) => {
+            return {
+                year,
+                week,
+                person,
+                times
+            };
+        });
+}
+
 function sendHtml(htmlPromise, req, res) {
     htmlPromise
         .then(html => {
@@ -64,24 +75,16 @@ function sendHtml(htmlPromise, req, res) {
 
 function renderReport(cookie, year, week) {
     return Promise.join(
-        maya.person(cookie),
-        maya.timeReportingYearWeek(cookie, year, week),
+        getReport(cookie, year, week),
         fs.readFileAsync('views/report.html', 'UTF-8'),
-        (person, times, reportHtmlTemplateBuffer) => {
-            const mail = mailBody(week, times, person);
-            const mailString = '\'' + mail.replace(/\n/g, '\\n') + '\'';
-            const mailBr = mail.replace(/\n/g, '<br>');
-            const mailHref = mail.replace(/\n/g, '%0D%0A');
-            const mailTo = process.env.MAILTO || '';
+        (report, reportHtmlTemplateBuffer) => {
+            const mailTo = process.env.MAILTO || 'roger@cool.com';
 
-            const reportHtml = reportHtmlTemplateBuffer.toString()
-                .replace(new RegExp('\\$\\{week\\}', 'g'), week)
-                .replace(new RegExp('\\$\\{mailString\\}', 'g'), mailString)
-                .replace(new RegExp('\\$\\{mailBr\\}', 'g'), mailBr)
-                .replace(new RegExp('\\$\\{mailHref\\}', 'g'), mailHref)
-                .replace(new RegExp('\\$\\{mailTo\\}', 'g'), mailTo);
-
-            return reportHtml;
+            return reportHtmlTemplateBuffer.toString()
+                .replace(reportTag.report, JSON.stringify(report))
+                .replace(reportTag.week, report.week)
+                .replace(reportTag.year, report.year)
+                .replace(reportTag.mailTo, mailTo);
     });
 }
 
@@ -90,6 +93,7 @@ app.use(bodyParser.urlencoded({
 })); 
 
 app.use('/styles.css', express.static('views/styles.css'));
+app.use('/webapp.js', express.static('views/webapp.js'));
 app.use('/login', express.static('views/login.html'));
 
 app.use((req, res, next) => {
@@ -137,6 +141,15 @@ app.get('/logout', (req, res) => {
             res.status(400);
             res.redirect('/');
         });
+});
+
+app.get('/api/:year(\\d\\d\\d\\d)-:week(\\d\\d?)', (req, res) => {
+    const year = parseInt(req.params.year);
+    const week = parseInt(req.params.week);
+
+    getReport(req.headers.cookie, year, week)
+        .then(report => res.json(report))
+        .catch(err => res.status(400).json({ message: err.body }));
 });
 
 app.get('/:year(\\d\\d\\d\\d)-:week(\\d\\d?)', (req, res) => {

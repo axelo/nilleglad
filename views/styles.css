@@ -86,3 +86,23 @@ input {
     padding: 20px;
     line-height: 1.5rem;
 }
+
+#report-mail .yearweek {
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 4px;
+    max-width: 80px;
+    border: none;
+    border-bottom: 1px solid black;
+}
+
+#report-content {
+    position: relative;
+}
+
+#fetch-failed,
+#fetching-report {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
