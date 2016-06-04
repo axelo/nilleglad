@@ -104,10 +104,6 @@ function request(options, data) {
         }
 
         const req = https.request(reqOptions, res => {
-            if (res.statusCode !== 200) {
-                return reject({ res });
-            }
-            
             const buffers = [];
 
             res.on('data', chunk => buffers.push(chunk));
@@ -115,12 +111,17 @@ function request(options, data) {
                 const bodyBuffer = Buffer.concat(buffers);
                 const body = iconv.decode(bodyBuffer, 'win1252');
 
+                if (res.statusCode !== 200) {
+                    return reject({ res, body });
+                }
+
                 resolve({ res, body });
             });
         });
 
         req.on('error', err => {
-            reject({ err });
+            console.error('Error for', reqOptions, err);
+            reject(err);
         });
 
         if (data) req.write(data);
