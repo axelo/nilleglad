@@ -104,7 +104,7 @@ function doFetchReport() {
 
     var httpRequest = new XMLHttpRequest();
 
-    httpRequest.open('GET', '/api/' + year + '-' + week, true);
+    httpRequest.open('GET', 'api/' + year + '-' + week, true);
     httpRequest.send(null);
 
     httpRequest.onreadystatechange = function () {
