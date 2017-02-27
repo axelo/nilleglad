@@ -8,6 +8,14 @@ var state = window.INITIAL_STATE || {
     isError: false
 };
 
+function phTime(mayaTime) {
+    var allInMinutes = Math.floor(mayaTime * 60);
+    var hours = Math.floor(allInMinutes / 60);
+    var minutes = (allInMinutes - hours * 60);
+
+    return hours + '.' + minutes;
+}
+
 function update(action) {
     var nextState;
 
@@ -66,8 +74,14 @@ function render(state) {
     }
 
     document.getElementById('times-visby').textContent = state.report.times.visby;
+    document.getElementById('times-ph-visby').textContent = phTime(state.report.times.visby);
+
     document.getElementById('times-distans').textContent = state.report.times.distans
+    document.getElementById('times-ph-distans').textContent = phTime(state.report.times.distans);
+
     document.getElementById('times-total').textContent = state.report.times.total
+    document.getElementById('times-ph-total').textContent = phTime(state.report.times.total);
+
     document.getElementById('person-first-name').textContent = state.report.person.firstName;
     document.getElementById('person-family-name').textContent = state.report.person.familyName;
 
