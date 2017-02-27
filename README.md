@@ -10,18 +10,6 @@ Klona repot sen
 
 # Användning
 
-    ./bin/nilleglad Veckonummer Maya-användarnamn [Maya-lösenord]
+    node src/app.js
 
-# Exempel
-
-    ./bin/nilleglad 16 mrbond
-
-Ger
-
-    Hej, rapport för v16
-
-    Visby: 25h
-    Sthlm: 14h
-    Tot: 39h
-
-    Mvh
+Som startar en webbserver på http://localhost:3000
