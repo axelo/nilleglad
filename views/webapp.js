@@ -9,9 +9,11 @@ var state = window.INITIAL_STATE || {
 };
 
 function phTime(mayaTime) {
-    var minutes = mayaTime * 60;
-    var hours = Math.floor(minutes / 60);
-    return hours + '.' + (minutes - hours * 60);
+    var allInMinutes = Math.floor(mayaTime * 60);
+    var hours = Math.floor(allInMinutes / 60);
+    var minutes = (allInMinutes - hours * 60);
+
+    return hours + '.' + minutes;
 }
 
 function update(action) {
